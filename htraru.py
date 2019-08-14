@@ -1,7 +1,10 @@
 ###Script for scraping transaction statistics from Estonian Land Board - http://www.maaamet.ee/kinnisvara/htraru
 ###Currently outputs JSON files for each report, which have to be processed further. 
-###Session data should be regenerated for each client.
+###Session data should be regenerated for each client. Anything marked as RENEW_THIS should be updated with "fresh" values.
+###
 ###USAGE: python htraru.py YEAR EHAK_CODE
+###
+###While the script can be run concurrently on multiple threads, it puts heavy strain on the server. So don't. Be nice.
 from lxml import html
 import requests
 import sys
@@ -73,17 +76,16 @@ data = {
   '__VIEWSTATE': 'RENEW_THIS'}
 
 
-#ehaklist = ['A108', 'A409', 'A404', 'A207', 'A314', 'A407', 'A307']
-ehaklist = [(sys.argv[2])]
+ehaklist = [(sys.argv[2])]  
 for report in reports:
 
     for ehakcode in ehaklist:
         for day in datespan(date(aasta, 1, 1), date(aasta, 12, 31), delta=timedelta(weeks=1)):
-            print (day, day + timedelta(days=6))
+            print (day, day + timedelta(days=7))
             data['INADS_EHAK'] = ehakcode
             data['LBTrykis'] = report
             data['txtAlgus'] = day
-            data['txtLopp'] = day + timedelta(days=6)
+            data['txtLopp'] = day + timedelta(days=7)
 			
 
             response = requests.post('http://www.maaamet.ee/kinnisvara/htraru/FilterUI.aspx', headers=headers, cookies=cookies, data=data)
@@ -98,5 +100,5 @@ for report in reports:
  
             except:
                 print ("failed: " + ehakcode  + " " + report + " " + str(data['txtAlgus']) + " " + str(data['txtLopp']))
-                print (response.text)
+                print (response.text) #For debugging purposes, comment out if not needed.
 
